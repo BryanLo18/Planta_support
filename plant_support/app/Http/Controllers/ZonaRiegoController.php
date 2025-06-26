@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\ZonaRiego;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate; // <-- Importante añadir esta línea
+use Illuminate\Support\Facades\Gate;
 
 class ZonaRiegoController extends Controller
 {
-    // index(), create(), store() y show() se quedan como están, abiertos a todos.
+    // Métodos relacionados con la gestión de zonas de riego
 
     public function index()
     {
@@ -21,41 +21,48 @@ class ZonaRiegoController extends Controller
         return view('zonas.create');
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'nombre_zona' => 'required|string|max:255',
-            'ubicacion' => 'nullable|string|max:255',
-            'tipo_cultivo' => 'required|string|max:255',
-        ]);
-        $request->user()->zonasRiego()->create($request->all());
-        return redirect()->route('zonas.index')->with('success', 'Zona de riego creada con éxito.');
-    }
-
     public function show(ZonaRiego $zona)
     {
         $zona->load('horarios', 'registros');
         return view('zonas.show', compact('zona'));
     }
-    
-    // edit() también se queda abierto para que todos vean el formulario, pero la acción de guardar estará protegida.
+
     public function edit(ZonaRiego $zona)
     {
         return view('zonas.edit', compact('zona'));
     }
 
     /**
-     * Actualiza una zona. ESTA ACCIÓN ESTÁ PROTEGIDA.
+     * Guarda la nueva zona con los campos adicionales.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'nombre_zona' => 'required|string|max:255',
+            'ubicacion' => 'nullable|string|max:255',
+            'tipo_cultivo' => 'required|string|max:255',
+            'area_metros' => 'nullable|numeric|min:0',
+            'estado' => 'required|string|in:Activo,Inactivo,Mantenimiento',
+        ]);
+
+        $request->user()->zonasRiego()->create($request->all());
+
+        return redirect()->route('zonas.index')->with('success', 'Zona de riego creada con éxito.');
+    }
+
+    /**
+     * Actualiza una zona con los campos adicionales.
      */
     public function update(Request $request, ZonaRiego $zona)
     {
-        // Solo los usuarios que pasen el Gate 'manage-zones' (admins) pueden continuar.
         Gate::authorize('manage-zones');
 
         $request->validate([
             'nombre_zona' => 'required|string|max:255',
             'ubicacion' => 'nullable|string|max:255',
             'tipo_cultivo' => 'required|string|max:255',
+            'area_metros' => 'nullable|numeric|min:0',
+            'estado' => 'required|string|in:Activo,Inactivo,Mantenimiento',
         ]);
 
         $zona->update($request->all());
@@ -63,12 +70,9 @@ class ZonaRiegoController extends Controller
         return redirect()->route('zonas.index')->with('success', 'Zona de riego actualizada con éxito.');
     }
 
-    /**
-     * Elimina una zona. ESTA ACCIÓN ESTÁ PROTEGIDA.
-     */
+    // ... (el método destroy se mantiene igual)
     public function destroy(ZonaRiego $zona)
     {
-        // Solo los usuarios que pasen el Gate 'manage-zones' (admins) pueden continuar.
         Gate::authorize('manage-zones');
 
         $zona->delete();

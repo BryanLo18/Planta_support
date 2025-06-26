@@ -14,6 +14,8 @@ class ZonaRiego extends Model
         'nombre_zona',
         'ubicacion',
         'tipo_cultivo',
+        'area_metros', // <-- AÑADIR
+        'estado',      // <-- AÑADIR
     ];
 
     public function user()
